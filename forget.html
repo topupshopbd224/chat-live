@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forget Password</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .forget-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .forget-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .forget-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .dob-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .dob-container input {
+            width: 30%;
+        }
+
+        .forget-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .forget-btn:hover {
+            background-color: #45a049;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="forget-container">
+        <h2>Forget Password</h2>
+        <form id="forgetForm">
+            <input type="email" id="email" placeholder="Enter your email" required>
+            <div class="dob-container">
+                <input type="text" id="dobYear" placeholder="Year (yyyy)" maxlength="4" required>
+                <input type="text" id="dobMonth" placeholder="Month (mm)" maxlength="2" required>
+                <input type="text" id="dobDay" placeholder="Day (dd)" maxlength="2" required>
+            </div>
+            <button type="submit" class="forget-btn">Verify</button>
+            <div class="error-message" id="forgetErrorMessage"></div>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBbNYihI7RlA7vAcpfdpgxm4wt6q9qZnDU",
+            authDomain: "chat-954b9.firebaseapp.com",
+            databaseURL: "https://chat-954b9-default-rtdb.firebaseio.com",
+            projectId: "chat-954b9",
+            storageBucket: "chat-954b9.firebasestorage.app",
+            messagingSenderId: "403129888271",
+            appId: "1:403129888271:web:0b126ac9de749f8d7f3d7a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        const forgetForm = document.getElementById('forgetForm');
+        const forgetEmailInput = document.getElementById('email');
+        const dobYearInput = document.getElementById('dobYear');
+        const dobMonthInput = document.getElementById('dobMonth');
+        const dobDayInput = document.getElementById('dobDay');
+        const forgetErrorMessage = document.getElementById('forgetErrorMessage');
+
+        forgetForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const email = forgetEmailInput.value;
+            const year = dobYearInput.value;
+            const month = dobMonthInput.value;
+            const day = dobDayInput.value;
+
+            const dateOfBirth = `${year}-${month}-${day}`;
+
+            // Validate if the date matches the one from the database
+            firebase.database().ref('users').orderByChild('email').equalTo(email).once('value', function(snapshot) {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    let correctDateOfBirth = false;
+
+                    // Check the date of birth of the user
+                    for (const key in userData) {
+                        if (userData[key].dateOfBirth === dateOfBirth) {
+                            correctDateOfBirth = true;
+                            break;
+                        }
+                    }
+
+                    if (correctDateOfBirth) {
+                        // Send password reset email
+                        firebase.auth().sendPasswordResetEmail(email)
+                            .then(() => {
+                                alert("A password reset email has been sent to your email address.");
+                                window.location.href = "index.html";  // Redirect to login page
+                            })
+                            .catch((error) => {
+                                forgetErrorMessage.textContent = error.message;
+                            });
+                    } else {
+                        forgetErrorMessage.textContent = "Date of birth does not match. Please try again.";
+                    }
+                } else {
+                    forgetErrorMessage.textContent = "No user found with this email address.";
+                }
+            });
+        });
+    </script>
+</body>
+</html>
