@@ -17,24 +17,28 @@
 
         .signup-container {
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
+            min-height: 450px; /* Adjusted to make the form a bit taller */
         }
 
         .signup-container h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-size: 24px;
+            color: #333;
         }
 
         .signup-container input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 12px;
+            margin: 12px 0;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
+            font-size: 16px;
         }
 
         .dob-container {
@@ -44,20 +48,51 @@
 
         .dob-container input {
             width: 30%;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .signup-btn, .google-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .signup-btn {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
 
-        .signup-btn:hover {
-            background-color: #45a049;
+        .google-btn {
+            background-color: #4285F4;
+            color: white;
+        }
+
+        .signup-btn:hover, .google-btn:hover {
+            opacity: 0.9;
+        }
+
+        .google-btn img {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .signup-link a {
+            text-decoration: none;
+            color: #4CAF50;
         }
 
         .error-message {
@@ -65,7 +100,6 @@
             text-align: center;
         }
 
-        /* Popup styles */
         .popup {
             display: none;
             position: fixed;
@@ -81,18 +115,18 @@
         .popup-content {
             background: white;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
         .popup-content h3 {
             margin-bottom: 10px;
         }
+
         #terms {
-          margin: 20px;
-          padding: 20px;
-          
+            margin: 20px;
+            padding: 20px;
         }
     </style>
 </head>
@@ -109,18 +143,22 @@
                 <input type="text" id="dobDay" placeholder="Day (dd)" maxlength="2" required>
             </div>
             <label>
-                <input type="checkbox" id="terms" required> 
-                I agree to the <a href="terms.html" target="_blank">Terms and Conditions</a> 
+                <input type="checkbox" id="terms" required>
+                I agree to the <a href="terms.html" target="_blank">Terms and Conditions</a>
             </label>
             <button type="submit" class="signup-btn">Sign Up</button>
             <div class="error-message" id="signupErrorMessage"></div>
         </form>
+
+        <div class="google-btn" id="googleSignUpBtn">
+            <img src="google.png" alt="Google Logo">
+            Sign up with Google
+        </div>
         <div class="signup-link">
-  <p>Already have an account? <a href="login.html">Login</a></p>
-</div>
+            <p>Already have an account? <a href="index.html">Login</a></p>
+        </div>
     </div>
 
-    <!-- Popup -->
     <div class="popup" id="verifyPopup">
         <div class="popup-content">
             <h3>Verifying Email...</h3>
@@ -133,7 +171,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
 
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBbNYihI7RlA7vAcpfdpgxm4wt6q9qZnDU",
             authDomain: "chat-954b9.firebaseapp.com",
@@ -146,6 +183,7 @@
 
         firebase.initializeApp(firebaseConfig);
 
+        const googleSignUpBtn = document.getElementById('googleSignUpBtn');
         const signupForm = document.getElementById('signupForm');
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
@@ -156,37 +194,24 @@
         const signupErrorMessage = document.getElementById('signupErrorMessage');
         const verifyPopup = document.getElementById('verifyPopup');
 
-        signupForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+        googleSignUpBtn.addEventListener('click', function () {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
 
-            const name = nameInput.value;
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            const dobYear = dobYearInput.value;
-            const dobMonth = dobMonthInput.value;
-            const dobDay = dobDayInput.value;
-
-            const dateOfBirth = `${dobYear}-${dobMonth}-${dobDay}`;
-
-            // Show popup
-            verifyPopup.style.display = 'flex';
-
-            // Create a new user in Firebase Auth
-            firebase.auth().createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-
-                    // Save user data (including date of birth) to Firebase Database
+                    // Save user data to Firebase Database
                     firebase.database().ref('users/' + user.uid).set({
-                        name: name,
-                        email: email,
-                        dateOfBirth: dateOfBirth,
+                        name: user.displayName,
+                        email: user.email,
+                        dateOfBirth: '', // Can be optional if not provided
                         createdAt: new Date().toISOString()
                     });
 
                     // Send email verification
                     user.sendEmailVerification()
                         .then(() => {
+                            verifyPopup.style.display = 'flex';
                             const interval = setInterval(() => {
                                 user.reload().then(() => {
                                     if (user.emailVerified) {
