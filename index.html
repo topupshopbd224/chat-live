@@ -17,48 +17,76 @@
 
         .login-container {
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
             width: 100%;
             max-width: 400px;
+            text-align: center;
         }
 
         .login-container h2 {
-            text-align: center;
+            font-size: 24px;
             margin-bottom: 20px;
+            color: #333;
         }
 
         .login-container input {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .login-btn, .google-login-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
         }
 
         .login-btn {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
         }
 
         .login-btn:hover {
             background-color: #45a049;
         }
 
+        .google-login-btn {
+            background-color: #4285F4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .google-login-btn img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .google-login-btn:hover {
+            background-color: #DF0000;
+        }
+
         .error-message {
             color: red;
-            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
         }
 
         .signup-link {
-            text-align: center;
-            margin-top: 10px;
+            margin-top: 15px;
+            font-size: 14px;
         }
 
         .signup-link a {
@@ -66,23 +94,29 @@
             text-decoration: none;
         }
 
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
         .terms-container {
-            text-align: center;
             margin-top: 10px;
+            font-size: 14px;
+            text-align: left;
         }
 
         .terms-container label {
             font-size: 14px;
+            color: #555;
         }
 
-        /* Mobile responsive design */
         @media (max-width: 500px) {
             .login-container {
-                padding: 15px;
+                padding: 20px;
             }
 
-            .login-btn {
-                padding: 12px;
+            .login-btn, .google-login-btn {
+                padding: 10px;
+                font-size: 14px;
             }
         }
     </style>
@@ -102,6 +136,10 @@
             <button type="submit" class="login-btn">Login</button>
             <div class="error-message" id="loginErrorMessage"></div>
         </form>
+        <button id="googleLoginBtn" class="google-login-btn">
+            <img src="google.png" alt="Google Login">
+            Login with Google
+        </button>
         <div class="signup-link">
             <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
         </div>
@@ -109,7 +147,6 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
-
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -128,7 +165,9 @@
         const passwordInput = document.getElementById('password');
         const termsCheckbox = document.getElementById('terms');
         const loginErrorMessage = document.getElementById('loginErrorMessage');
+        const googleLoginButton = document.getElementById('googleLoginBtn');
 
+        // Regular Email and Password Login
         loginForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
@@ -141,14 +180,12 @@
                 return;
             }
 
-            // Sign in the user with Firebase Auth
             firebase.auth().signInWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
 
                     // Check if email is verified
                     if (user.emailVerified) {
-                        // Redirect to the main page
                         window.location.href = "chat.html"; // Change this to your desired page
                     } else {
                         loginErrorMessage.textContent = "Please verify your email first.";
@@ -158,6 +195,21 @@
                     loginErrorMessage.textContent = error.message;
                 });
         });
+
+        // Google Login
+        googleLoginButton.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            firebase.auth().signInWithPopup(provider)
+                .then(result => {
+                    const user = result.user;
+                    window.location.href = "chat.html"; // Change to your desired page
+                })
+                .catch((error) => {
+                    alert(error.message);
+                });
+        });
     </script>
+
 </body>
 </html>
